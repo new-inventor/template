@@ -116,6 +116,14 @@ class Template
         $this->replacements = $replacements;
     }
 
+    public function addReplacement($replacement)
+    {
+        TypeChecker::getInstance()
+            ->isString($replacement, 'replacement')
+            ->throwTypeErrorIfNotValid();
+        
+        $this->replacements[] = $replacement;
+    }
 
     public function getReplaced()
     {
