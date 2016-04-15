@@ -23,6 +23,5 @@
     "new-inventor/php-type-checker": "*"
   },
   "require-dev": {
-    "phpunit/phpunit": "5.1.*"
   }
 }

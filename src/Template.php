@@ -44,7 +44,7 @@ class Template
 
     protected function loadBorders()
     {
-        $borders = Config::getInstance()->get(['renderer', 'placeholders', 'borders']);
+        $borders = Config::get(['template', 'borders'], ['{', '}']);
         if (static::isValidBorders($borders)) {
             $this->borders = $borders;
         }
