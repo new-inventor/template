@@ -45,25 +45,6 @@ class Template
         $this->placeholders = $this->parsePlaceholders();
     }
 
-    /**
-     * @param mixed $renderer
-     * @return string
-     */
-    public function getString($renderer)
-    {
-        if (!isset($this->placeholders[self::$phWithBorders])) {
-            return '';
-        }
-        $params = array_slice(func_get_args(), 1);
-        foreach($this->placeholders[self::$phWithoutBorders] as $placeholder){
-            $replacement = call_user_func_array([$renderer, $placeholder], $params);
-            $this->addReplacement($replacement);
-        }
-
-        $result = str_replace($this->placeholders[self::$phWithBorders], $this->replacements, $this->template);
-        return $result;
-    }
-
     protected function loadBorders()
     {
         $borders = Config::get(['template', 'borders'], ['{', '}']);
@@ -122,21 +103,29 @@ class Template
         return $regexp;
     }
 
-    protected function getPlaceholders()
+    /**
+     * @param mixed $renderer
+     * @return string
+     */
+    public function getString($renderer)
     {
-        if (isset($this->placeholders[self::$phWithoutBorders])) {
-            return $this->placeholders[self::$phWithoutBorders];
+        if (!isset($this->placeholders[self::$phWithBorders])) {
+            return '';
         }
-        return [];
+        $params = array_slice(func_get_args(), 1);
+        $this->processPlaceholders($renderer, $params);
+
+        $result = str_replace($this->placeholders[self::$phWithBorders], $this->replacements, $this->template);
+        return $result;
     }
 
-//    protected function setReplacements(array $replacements)
-//    {
-//        TypeChecker::getInstance()
-//            ->checkArray($replacements, [SimpleTypes::STRING], 'replacements')
-//            ->throwCustomErrorIfNotValid('Тексты для замены должны быть строками.');
-//        $this->replacements = $replacements;
-//    }
+    protected function processPlaceholders($renderer, array $params)
+    {
+        foreach($this->placeholders[self::$phWithoutBorders] as $placeholder){
+            $replacement = call_user_func_array([$renderer, $placeholder], $params);
+            $this->addReplacement($replacement);
+        }
+    }
 
     protected function addReplacement($replacement)
     {
