@@ -25,6 +25,9 @@ class Template
     /** @var array */
     protected $borders;
 
+    protected static $phWithBorders = 0;
+    protected static $phWithoutBorders = 1;
+
     /**
      * Template constructor.
      *
@@ -40,6 +43,25 @@ class Template
         $this->loadBorders();
 
         $this->placeholders = $this->parsePlaceholders();
+    }
+
+    /**
+     * @param mixed $renderer
+     * @return string
+     */
+    public function getString($renderer)
+    {
+        if (!isset($this->placeholders[self::$phWithBorders])) {
+            return '';
+        }
+        $params = array_slice(func_get_args(), 1);
+        foreach($this->placeholders[self::$phWithoutBorders] as $placeholder){
+            $replacement = call_user_func_array([$renderer, $placeholder], $params);
+            $this->addReplacement($replacement);
+        }
+
+        $result = str_replace($this->placeholders[self::$phWithBorders], $this->replacements, $this->template);
+        return $result;
     }
 
     protected function loadBorders()
@@ -62,7 +84,7 @@ class Template
             ->checkArray($borders, [SimpleTypes::STRING], 'borders')
             ->throwCustomErrorIfNotValid('Граница должна быть строкой.');
         if (!isset($borders[0]) || !isset($borders[1])) {
-            throw new ArgumentException('Границы должны быть массивом из 2-х элементов - левой и правой границей заполнителя.',
+            throw new ArgumentException('Границы должны быть заданы массивом из 2-х элементов - левой и правой границей заполнителя.',
                 'borders');
         }
 
@@ -100,36 +122,28 @@ class Template
         return $regexp;
     }
 
-    public function getPlaceholders()
+    protected function getPlaceholders()
     {
-        if (isset($this->placeholders[1])) {
-            return $this->placeholders[1];
+        if (isset($this->placeholders[self::$phWithoutBorders])) {
+            return $this->placeholders[self::$phWithoutBorders];
         }
         return [];
     }
 
-    public function setReplacements(array $replacements)
-    {
-        TypeChecker::getInstance()
-            ->checkArray($replacements, [SimpleTypes::STRING], 'replacements')
-            ->throwCustomErrorIfNotValid('Тексты для замены должены быть строкой.');
-        $this->replacements = $replacements;
-    }
+//    protected function setReplacements(array $replacements)
+//    {
+//        TypeChecker::getInstance()
+//            ->checkArray($replacements, [SimpleTypes::STRING], 'replacements')
+//            ->throwCustomErrorIfNotValid('Тексты для замены должны быть строками.');
+//        $this->replacements = $replacements;
+//    }
 
-    public function addReplacement($replacement)
+    protected function addReplacement($replacement)
     {
         TypeChecker::getInstance()
             ->isString($replacement, 'replacement')
             ->throwTypeErrorIfNotValid();
         
         $this->replacements[] = $replacement;
-    }
-
-    public function getReplaced()
-    {
-        if (isset($this->placeholders[0])) {
-            return str_replace($this->placeholders[0], $this->replacements, $this->template);
-        }
-        return '';
     }
 }
